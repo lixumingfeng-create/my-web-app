@@ -1,23 +1,985 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>我的网页App</title>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:Arial;background:#f4f4f4;padding:40px}
-    .box{max-width:500px;margin:0 auto;background:white;padding:30px;border-radius:12px;box-shadow:0 4px 12px #00000010;text-align:center}
-    h1{color:#22c55e;margin-bottom:20px}
-    button{padding:12px 24px;background:#0ea5e9;color:white;border:none;border-radius:8px;cursor:pointer;margin-top:20px}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="英语教练">
+<title>🚗 英语口袋教练</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+:root{
+  --primary:#7C6FF7;--primary-dark:#5A52D5;
+  --success:#4ECCA3;--danger:#FF6B6B;--warning:#FFD700;
+  --bg:#0F0E17;--surface:#1C1B2E;--surface2:#252438;
+  --text:#FFFFFE;--text2:#A7A9BE;--border:#2E2D45;
+  --safe-top:env(safe-area-inset-top,20px);
+  --safe-bottom:env(safe-area-inset-bottom,20px);
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;min-height:-webkit-fill-available;overflow-x:hidden;
+}
+.screen{display:none;min-height:100vh;min-height:-webkit-fill-available;
+  flex-direction:column;padding-top:var(--safe-top);padding-bottom:var(--safe-bottom)}
+.screen.active{display:flex}
+
+/* ── HOME ── */
+.home-header{padding:20px 20px 12px;display:flex;align-items:center;justify-content:space-between}
+.home-title{font-size:20px;font-weight:700}
+.home-stats{display:flex;gap:8px;align-items:center}
+.stat-badge{display:flex;align-items:center;gap:4px;background:var(--surface2);
+  border-radius:20px;padding:6px 12px;font-size:14px;font-weight:600}
+.lessons-grid{flex:1;padding:8px 16px 16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.lesson-card{background:var(--surface);border-radius:16px;padding:16px 18px;
+  display:flex;align-items:center;gap:14px;border:1px solid var(--border);cursor:pointer;
+  transition:transform .1s,background .15s;position:relative;overflow:hidden}
+.lesson-card:active{transform:scale(.98);background:var(--surface2)}
+.lesson-card.locked{opacity:.45;cursor:default}
+.lesson-card.locked:active{transform:none}
+.lesson-emoji{font-size:30px;width:50px;height:50px;display:flex;align-items:center;
+  justify-content:center;background:var(--surface2);border-radius:12px;flex-shrink:0}
+.lesson-info{flex:1}
+.lesson-title{font-size:16px;font-weight:600;margin-bottom:3px}
+.lesson-meta{font-size:12px;color:var(--text2)}
+.lesson-stars{font-size:16px;letter-spacing:1px}
+
+/* ── LESSON DETAIL ── */
+.ld-header{padding:16px 20px 8px;display:flex;align-items:center;gap:12px}
+.back-btn{font-size:22px;cursor:pointer;padding:8px;margin:-8px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px}
+.back-btn:active{background:var(--surface2)}
+.ld-body{flex:1;padding:16px 20px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.ld-emoji{font-size:52px;text-align:center;margin:4px 0}
+.ld-title{font-size:22px;font-weight:700;text-align:center}
+.ld-desc{font-size:13px;color:var(--text2);text-align:center}
+.section-label{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.mode-btn{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;width:100%;
+  transition:background .15s;min-height:72px}
+.mode-btn:active{background:var(--surface2)}
+.mode-btn.driving-btn{background:linear-gradient(135deg,#2D1B69 0%,#1A1B4B 100%);border-color:var(--primary)}
+.mode-icon{font-size:26px;width:44px;text-align:center;flex-shrink:0}
+.mode-info{flex:1;text-align:left}
+.mode-name{font-size:16px;font-weight:600;margin-bottom:2px;color:var(--text)}
+.mode-desc{font-size:12px;color:var(--text2)}
+
+/* ── DRIVING MODE ── */
+.drv-header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+.drv-prog{font-size:14px;color:var(--text2)}
+.drv-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px 20px;gap:16px;text-align:center}
+.drv-num{font-size:13px;color:var(--text2)}
+.drv-en{font-size:34px;font-weight:700;line-height:1.3;color:var(--text);max-width:340px}
+.type-chip{font-size:11px;background:var(--primary);color:#fff;padding:3px 10px;
+  border-radius:10px;font-weight:600}
+.drv-zh{font-size:20px;color:var(--success);font-weight:500;max-width:340px}
+.drv-ex{font-size:14px;color:var(--text2);line-height:1.6;max-width:340px;font-style:italic}
+.wave{display:flex;gap:4px;height:28px;align-items:center}
+.wave span{width:4px;height:6px;background:var(--primary);border-radius:2px;animation:wave 1.2s ease-in-out infinite}
+.wave span:nth-child(2){animation-delay:.1s}
+.wave span:nth-child(3){animation-delay:.2s}
+.wave span:nth-child(4){animation-delay:.3s}
+.wave span:nth-child(5){animation-delay:.4s}
+@keyframes wave{0%,100%{height:6px}50%{height:22px}}
+.drv-footer{padding:16px 20px;display:flex;gap:10px}
+.drv-nav{flex:1;padding:18px;border-radius:14px;border:none;font-size:17px;
+  font-weight:600;cursor:pointer;background:var(--surface2);color:var(--text);min-height:68px}
+.drv-nav.nxt{background:var(--primary);flex:2}
+.drv-nav:active{opacity:.8}
+
+/* ── EXERCISE HEADER ── */
+.ex-header{padding:14px 20px;display:flex;align-items:center;gap:12px}
+.prog-wrap{flex:1;height:7px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;background:var(--primary);border-radius:4px;transition:width .35s}
+.ex-counter{font-size:13px;color:var(--text2);min-width:36px;text-align:right}
+
+/* ── CARD MODE ── */
+.ex-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:20px;gap:18px}
+.card-wrap{width:100%;max-width:360px;perspective:1000px}
+.card-flip{position:relative;width:100%;min-height:210px;transform-style:preserve-3d;
+  transition:transform .45s;cursor:pointer}
+.card-flip.flipped{transform:rotateY(180deg)}
+.card-face{position:absolute;width:100%;min-height:210px;backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;padding:26px 22px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:10px}
+.card-face.back{transform:rotateY(180deg);background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%)}
+.card-en{font-size:28px;font-weight:700;text-align:center;color:var(--text);line-height:1.3}
+.card-hint{font-size:12px;color:var(--text2);margin-top:4px}
+.card-tts{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);
+  transition:opacity .3s}
+.card-zh{font-size:20px;font-weight:600;text-align:center;color:var(--success)}
+.card-note{font-size:12px;color:var(--text2);text-align:center;line-height:1.5}
+.card-example{font-size:13px;color:var(--text2);text-align:center;font-style:italic;
+  line-height:1.5;padding-top:8px;border-top:1px solid var(--border);width:100%}
+.actions{width:100%;max-width:360px;display:flex;gap:10px}
+.act-btn{flex:1;padding:18px;border-radius:14px;border:none;font-size:16px;
+  font-weight:700;cursor:pointer;min-height:68px;transition:transform .1s,opacity .1s}
+.act-btn:active{transform:scale(.97);opacity:.85}
+.act-btn.know{background:var(--success);color:#0A2218}
+.act-btn.dontknow{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.act-btn.primary{background:var(--primary);color:#fff}
+.act-btn.secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+
+/* ── LISTEN MODE ── */
+.listen-icon{width:76px;height:76px;border-radius:50%;background:rgba(124,111,247,.12);
+  display:flex;align-items:center;justify-content:center;font-size:34px;position:relative}
+.listen-icon.playing::after{content:'';position:absolute;width:100%;height:100%;
+  border-radius:50%;border:2px solid var(--primary);animation:ripple 1.5s ease-out infinite}
+@keyframes ripple{0%{transform:scale(1);opacity:1}100%{transform:scale(1.7);opacity:0}}
+.listen-en{font-size:22px;font-weight:700;text-align:center;opacity:0;transition:opacity .4s;max-width:340px;line-height:1.4}
+.listen-en.show{opacity:1}
+.choices{width:100%;max-width:360px;display:flex;flex-direction:column;gap:8px;
+  opacity:0;transition:opacity .3s;pointer-events:none}
+.choices.show{opacity:1;pointer-events:all}
+.choice-btn{background:var(--surface);border:2px solid var(--border);border-radius:14px;
+  padding:16px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;min-height:68px;
+  transition:background .15s,border-color .15s}
+.choice-btn:active{background:var(--surface2)}
+.choice-btn.correct{border-color:var(--success);background:rgba(78,204,163,.12)}
+.choice-btn.wrong{border-color:var(--danger);background:rgba(255,107,107,.12)}
+.choice-letter{width:30px;height:30px;border-radius:50%;background:var(--surface2);
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+  font-weight:700;flex-shrink:0;color:var(--text)}
+.choice-text{font-size:15px;color:var(--text);flex:1;line-height:1.4}
+
+/* ── SHADOW MODE ── */
+.shd-en{font-size:24px;font-weight:700;text-align:center;color:var(--text);
+  line-height:1.4;max-width:340px}
+.shd-zh{font-size:15px;color:var(--text2);text-align:center;opacity:.8}
+.shd-controls{display:flex;gap:10px;width:100%;max-width:360px}
+.shd-play{flex:1;padding:16px;border-radius:14px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text);font-size:15px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:60px}
+.shd-play:active{background:var(--surface2)}
+.eval-label{font-size:14px;color:var(--text2)}
+.eval-row{display:flex;gap:10px;width:100%;max-width:360px}
+.eval-btn{flex:1;padding:14px 6px;border-radius:14px;border:none;font-size:13px;
+  font-weight:700;cursor:pointer;text-align:center;min-height:72px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.eval-btn .e-icon{font-size:22px}
+.eval-btn.great{background:rgba(78,204,163,.18);border:1px solid var(--success);color:var(--success)}
+.eval-btn.ok{background:rgba(255,215,0,.12);border:1px solid var(--warning);color:var(--warning)}
+.eval-btn.replay{background:var(--surface2);border:1px solid var(--border);color:var(--text2)}
+.eval-btn:active{opacity:.8}
+
+/* ── RESULT ── */
+.result-body{flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:32px 24px;gap:20px;text-align:center}
+.result-emoji{font-size:68px;animation:pop .5s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes pop{0%{transform:scale(0)}80%{transform:scale(1.1)}100%{transform:scale(1)}}
+.result-title{font-size:26px;font-weight:700}
+.result-stars{font-size:38px;letter-spacing:4px;animation:pop .5s .2s both cubic-bezier(.175,.885,.32,1.275)}
+.result-xp{font-size:17px;color:var(--warning);font-weight:700}
+.result-stats{display:flex;gap:28px}
+.rstat{display:flex;flex-direction:column;align-items:center;gap:3px}
+.rstat .num{font-size:28px;font-weight:700}
+.rstat .lbl{font-size:12px;color:var(--text2)}
+.result-btns{width:100%;display:flex;flex-direction:column;gap:10px}
+
+/* ── SETTINGS ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:flex-end}
+.overlay.show{display:flex}
+.settings-panel{background:var(--surface);border-radius:24px 24px 0 0;
+  padding:24px 20px calc(24px + var(--safe-bottom));width:100%;max-height:72vh;overflow-y:auto}
+.set-title{font-size:18px;font-weight:700;margin-bottom:20px}
+.set-row{display:flex;align-items:center;justify-content:space-between;
+  padding:14px 0;border-bottom:1px solid var(--border)}
+.set-label{font-size:16px}
+.speed-btns{display:flex;gap:8px}
+.speed-btn{padding:6px 14px;border-radius:10px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--text2);font-size:13px;font-weight:700;cursor:pointer}
+.speed-btn.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.speed-btn:active{opacity:.8}
+.reset-btn{background:rgba(255,107,107,.15);border:1px solid var(--danger);color:var(--danger);
+  padding:8px 16px;border-radius:10px;font-size:14px;cursor:pointer;font-weight:700}
+.reset-btn:active{opacity:.8}
+
+/* ── TOAST ── */
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.85);
+  background:var(--surface2);color:var(--text);padding:14px 24px;border-radius:16px;
+  font-size:18px;font-weight:700;text-align:center;pointer-events:none;
+  opacity:0;transition:all .2s;z-index:200;min-width:160px;border:1px solid var(--border)}
+.toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.toast.success{border-color:var(--success);color:var(--success)}
+.toast.error{border-color:var(--danger);color:var(--danger)}
+
+/* scrollbar hide */
+::-webkit-scrollbar{width:0;height:0}
+</style>
 </head>
 <body>
-  <div class="box">
-    <h1>✅ 部署成功！</h1>
-    <p>这是你自己的网页 App</p>
-    <button onclick="document.getElementById('tip').innerText='🎉 正常运行！'">点我测试</button>
-    <p id="tip" style="margin-top:20px;font-size:18px"></p>
+
+<!-- ════════════════ HOME ════════════════ -->
+<div id="screen-home" class="screen active">
+  <div class="home-header">
+    <div class="home-title">🚗 英语口袋教练</div>
+    <div class="home-stats">
+      <div class="stat-badge">🔥 <span id="streak-cnt">0</span>天</div>
+      <div class="stat-badge">⭐ <span id="xp-cnt">0</span></div>
+      <div class="stat-badge" style="cursor:pointer" onclick="showSettings()">⚙️</div>
+    </div>
   </div>
+  <div class="lessons-grid" id="lessons-grid"></div>
+</div>
+
+<!-- ════════════════ LESSON DETAIL ════════════════ -->
+<div id="screen-lesson" class="screen">
+  <div class="ld-header">
+    <div class="back-btn" onclick="navigate('home')">←</div>
+    <div style="flex:1"></div>
+    <div id="ld-stars" style="font-size:18px;letter-spacing:2px"></div>
+  </div>
+  <div class="ld-body">
+    <div class="ld-emoji" id="ld-emoji"></div>
+    <div class="ld-title" id="ld-title"></div>
+    <div class="ld-desc" id="ld-desc"></div>
+    <div class="section-label">🚗 免手驾驶模式</div>
+    <button class="mode-btn driving-btn" onclick="startMode('driving')">
+      <span class="mode-icon">🎧</span>
+      <div class="mode-info">
+        <div class="mode-name">驾驶模式</div>
+        <div class="mode-desc">自动朗读英文＋中文释义，只需聆听</div>
+      </div>
+    </button>
+    <div class="section-label">📱 互动练习模式（停车时用）</div>
+    <button class="mode-btn" onclick="startMode('card')">
+      <span class="mode-icon">🃏</span>
+      <div class="mode-info">
+        <div class="mode-name">单词卡片</div>
+        <div class="mode-desc">翻转卡片，测试自己是否认识</div>
+      </div>
+    </button>
+    <button class="mode-btn" onclick="startMode('listen')">
+      <span class="mode-icon">🎯</span>
+      <div class="mode-info">
+        <div class="mode-name">听力辨义</div>
+        <div class="mode-desc">听英文，选出正确的中文意思</div>
+      </div>
+    </button>
+    <button class="mode-btn" onclick="startMode('shadow')">
+      <span class="mode-icon">🗣️</span>
+      <div class="mode-info">
+        <div class="mode-name">跟读练习</div>
+        <div class="mode-desc">听范读后跟读，练习口语发音</div>
+      </div>
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════ DRIVING MODE ════════════════ -->
+<div id="screen-driving" class="screen">
+  <div class="drv-header">
+    <div class="back-btn" onclick="exitExercise()">✕</div>
+    <div class="drv-prog" id="drv-prog">1 / 10</div>
+    <div style="width:44px"></div>
+  </div>
+  <div class="drv-body">
+    <div class="drv-num" id="drv-num">第 1 个</div>
+    <div class="drv-en" id="drv-en">——</div>
+    <div class="type-chip" id="drv-chip">词汇</div>
+    <div class="drv-zh" id="drv-zh"></div>
+    <div class="drv-ex" id="drv-ex"></div>
+    <div class="wave" id="wave">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div style="font-size:12px;color:var(--text2)" id="drv-countdown"></div>
+  </div>
+  <div class="drv-footer">
+    <button class="drv-nav" onclick="drvPrev()">← 上一个</button>
+    <button class="drv-nav nxt" onclick="drvNext()">下一个 →</button>
+  </div>
+</div>
+
+<!-- ════════════════ CARD MODE ════════════════ -->
+<div id="screen-card" class="screen">
+  <div class="ex-header">
+    <div class="back-btn" onclick="exitExercise()">✕</div>
+    <div class="prog-wrap"><div class="prog-fill" id="card-bar"></div></div>
+    <div class="ex-counter" id="card-cnt">1/10</div>
+  </div>
+  <div class="ex-body">
+    <div class="card-wrap">
+      <div class="card-flip" id="card-flip" onclick="flipCard()">
+        <div class="card-face front">
+          <div class="type-chip" id="card-chip">词汇</div>
+          <div class="card-en" id="card-en">Word</div>
+          <div class="card-tts" id="card-tts">🔊 正在播放...</div>
+          <div class="card-hint">点击卡片翻转查看释义</div>
+        </div>
+        <div class="card-face back">
+          <div class="card-en" id="card-en-b">Word</div>
+          <div class="card-zh" id="card-zh">中文</div>
+          <div class="card-note" id="card-note"></div>
+          <div class="card-example" id="card-ex"></div>
+        </div>
+      </div>
+    </div>
+    <div class="actions" id="card-acts" style="display:none">
+      <button class="act-btn dontknow" onclick="cardAns(false)">✗ 不认识</button>
+      <button class="act-btn know" onclick="cardAns(true)">✓ 认识</button>
+    </div>
+    <div id="card-hint2" style="font-size:12px;color:var(--text2)">翻转后评价自己是否认识</div>
+  </div>
+</div>
+
+<!-- ════════════════ LISTEN MODE ════════════════ -->
+<div id="screen-listen" class="screen">
+  <div class="ex-header">
+    <div class="back-btn" onclick="exitExercise()">✕</div>
+    <div class="prog-wrap"><div class="prog-fill" id="lst-bar"></div></div>
+    <div class="ex-counter" id="lst-cnt">1/10</div>
+  </div>
+  <div class="ex-body">
+    <div class="listen-icon" id="lst-icon">🎧</div>
+    <div style="font-size:13px;color:var(--text2)" id="lst-status">正在播放...</div>
+    <div class="listen-en" id="lst-en"></div>
+    <div class="choices" id="choices">
+      <button class="choice-btn" id="ch0" onclick="lstAns(0)">
+        <div class="choice-letter">A</div>
+        <div class="choice-text" id="ct0">—</div>
+      </button>
+      <button class="choice-btn" id="ch1" onclick="lstAns(1)">
+        <div class="choice-letter">B</div>
+        <div class="choice-text" id="ct1">—</div>
+      </button>
+      <button class="choice-btn" id="ch2" onclick="lstAns(2)">
+        <div class="choice-letter">C</div>
+        <div class="choice-text" id="ct2">—</div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ SHADOW MODE ════════════════ -->
+<div id="screen-shadow" class="screen">
+  <div class="ex-header">
+    <div class="back-btn" onclick="exitExercise()">✕</div>
+    <div class="prog-wrap"><div class="prog-fill" id="shd-bar"></div></div>
+    <div class="ex-counter" id="shd-cnt">1/10</div>
+  </div>
+  <div class="ex-body">
+    <div class="type-chip" id="shd-chip">词汇</div>
+    <div class="shd-en" id="shd-en">English</div>
+    <div class="shd-zh" id="shd-zh">中文</div>
+    <div class="shd-controls">
+      <button class="shd-play" onclick="shdPlay(null)">▶ 正常速</button>
+      <button class="shd-play" onclick="shdPlay(0.72)">🐢 慢速</button>
+    </div>
+    <div class="eval-label">跟读后，评价自己：</div>
+    <div class="eval-row">
+      <button class="eval-btn great" onclick="shdEval('great')">
+        <span class="e-icon">🎯</span>很棒
+      </button>
+      <button class="eval-btn ok" onclick="shdEval('ok')">
+        <span class="e-icon">😊</span>一般
+      </button>
+      <button class="eval-btn replay" onclick="shdEval('replay')">
+        <span class="e-icon">🔄</span>再听
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ RESULT ════════════════ -->
+<div id="screen-result" class="screen">
+  <div style="padding:20px 20px 8px;display:flex;align-items:center">
+    <div style="flex:1"></div>
+  </div>
+  <div class="result-body">
+    <div class="result-emoji" id="res-emoji">🎉</div>
+    <div class="result-title" id="res-title">课程完成！</div>
+    <div class="result-stars" id="res-stars">⭐⭐⭐</div>
+    <div class="result-xp" id="res-xp">+50 XP 获得！</div>
+    <div class="result-stats">
+      <div class="rstat"><div class="num" id="res-ok">—</div><div class="lbl">正确</div></div>
+      <div class="rstat"><div class="num" id="res-ng">—</div><div class="lbl">错误</div></div>
+      <div class="rstat"><div class="num" id="res-acc">—%</div><div class="lbl">准确率</div></div>
+    </div>
+    <div class="result-btns">
+      <button class="act-btn primary" onclick="navigate('home')" style="width:100%">返回首页</button>
+      <button class="act-btn secondary" onclick="retryLesson()" style="width:100%">再练一遍</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ SETTINGS ════════════════ -->
+<div class="overlay" id="overlay" onclick="hideSettings(event)">
+  <div class="settings-panel" onclick="event.stopPropagation()">
+    <div class="set-title">⚙️ 设置</div>
+    <div class="set-row">
+      <div class="set-label">朗读速度</div>
+      <div class="speed-btns">
+        <button class="speed-btn" onclick="setSpeed(0.7)" data-sp="0.7">慢</button>
+        <button class="speed-btn active" onclick="setSpeed(0.9)" data-sp="0.9">标准</button>
+        <button class="speed-btn" onclick="setSpeed(1.15)" data-sp="1.15">快</button>
+      </div>
+    </div>
+    <div class="set-row">
+      <div class="set-label">驾驶模式间隔</div>
+      <div class="speed-btns">
+        <button class="speed-btn" onclick="setDelay(5)" data-dl="5">5秒</button>
+        <button class="speed-btn active" onclick="setDelay(7)" data-dl="7">7秒</button>
+        <button class="speed-btn" onclick="setDelay(10)" data-dl="10">10秒</button>
+      </div>
+    </div>
+    <div class="set-row" style="border:none">
+      <div class="set-label">重置所有进度</div>
+      <button class="reset-btn" onclick="resetProg()">重置</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// VOCABULARY DATA
+// ═══════════════════════════════════════════
+const VOCAB = { lessons: [
+  {
+    id:1, title:"基础词汇", emoji:"📚",
+    desc:"10个常用英语单词，涵盖描述性与动作词汇",
+    items:[
+      {id:"w01",en:"Rejuvenated",zh:"焕新的；复兴的",ex:"The brand was rejuvenated with a fresh design.",type:"word"},
+      {id:"w02",en:"Tangible",zh:"有形的；切实可感的",ex:"We need tangible results, not just promises.",type:"word"},
+      {id:"w03",en:"Modernized",zh:"现代化的",ex:"The factory has been fully modernized.",type:"word"},
+      {id:"w04",en:"Time-honored",zh:"历史悠久的；传统的",ex:"This is a time-honored tradition in China.",type:"word"},
+      {id:"w05",en:"Spring couplets",zh:"春联",ex:"We put up spring couplets before the New Year.",type:"word"},
+      {id:"w06",en:"Approach",zh:"靠近；处理方法；途径",ex:"We need a fresh approach to solve this problem.",type:"word"},
+      {id:"w07",en:"Fuel",zh:"加强；刺激；推动",ex:"The news fueled speculation in the market.",type:"word"},
+      {id:"w08",en:"Modify",zh:"调整；修改；修饰",ex:"We need to modify our strategy based on user feedback.",type:"word"},
+      {id:"w09",en:"Capability",zh:"能力；性能；容量",ex:"This system has the capability to process millions of requests.",type:"word"},
+      {id:"w10",en:"Orient",zh:"使适应；确定方向",ex:"It took a week to orient myself to the new role.",type:"word"}
+    ]
+  },
+  {
+    id:2, title:"职场句式·协作对齐", emoji:"🤝",
+    desc:"需求评审、目标设定时的必备表达，高频使用",
+    items:[
+      {id:"p01",en:"Align on",zh:"对齐；达成共识",ex:"We need to align on the core requirements before coding.",note:"接计划目标等名词，多用于需求评审",type:"phrase"},
+      {id:"p02",en:"Walk through",zh:"梳理；带某人过一遍",ex:"I'll walk you through the project background and the current logic.",note:"walk somebody through，后接过什么内容的名词",type:"phrase"},
+      {id:"p03",en:"Evolve through",zh:"历经……演变/迭代",ex:"The feature has evolved through several versions based on user feedback.",note:"复盘、业务回顾时强调动态发展",type:"phrase"},
+      {id:"p04",en:"Since..., we've seen...",zh:"自从……以来，我们见证了……",ex:"Since the new update, we've seen a 68% increase in orders.",note:"数据汇报、战果展示高频句式",type:"phrase"},
+      {id:"p05",en:"Get on the same page",zh:"达成共识；保持认知一致",ex:"The goal of today's meeting is to get on the same page about where we stand.",note:"会议开场，统一大家认知",type:"phrase"}
+    ]
+  },
+  {
+    id:3, title:"职场句式·挑战问题", emoji:"💪",
+    desc:"描述瓶颈、压力与核心问题的地道表达",
+    items:[
+      {id:"p11",en:"Hit a wall",zh:"遇到瓶颈；陷入僵局",ex:"Our expansion plan hit a wall because we couldn't find a reliable local partner.",note:"项目因不可控因素突然停滞",type:"phrase"},
+      {id:"p12",en:"Drown in",zh:"淹没在……中；应接不暇",ex:"The marketing team is drowning in data after the global campaign launch.",note:"形容被海量工作压得喘不过气",type:"phrase"},
+      {id:"p13",en:"Our main issue is...",zh:"我们的主要问题是……",ex:"Our main issue is the lack of communication between the logistics team and the sellers.",note:"陈述根本问题，一针见血",type:"phrase"},
+      {id:"p14",en:"Fight fires",zh:"救火；处理紧急突发问题",ex:"We need to improve our system so we can stop fighting fires and focus on innovation.",note:"形容陷入反复的突发状况中",type:"phrase"},
+      {id:"p15",en:"Transparent",zh:"透明的；公开清晰的",ex:"We need to make the tracking process more transparent to reduce customer anxiety.",note:"建立信任的关键词",type:"word"}
+    ]
+  },
+  {
+    id:4, title:"职场句式·战略表达", emoji:"🎯",
+    desc:"战略分析、长远规划中的高级表达方式",
+    items:[
+      {id:"p21",en:"In the short term... / In the long run...",zh:"短期内…… / 从长远来看……",ex:"In the short term, it may increase costs; but in the long run, it will improve efficiency.",note:"对比即时利益与深远影响，职场分析必备",type:"phrase"},
+      {id:"p22",en:"Be the foundation for...",zh:"为……奠定基础",ex:"This data cleanup will be the foundation for our future AI project.",note:"强调某项工作具有战略意义",type:"phrase"},
+      {id:"p23",en:"...has witnessed a X% surge in...",zh:"……见证了X%的激增",ex:"Since last quarter, our team has witnessed a 20% surge in feedback emails.",note:"witness增加高级感，surge强调突发性增长",type:"phrase"},
+      {id:"p24",en:"Position ourselves for...",zh:"为……做好战略定位",ex:"We're positioning ourselves for greater and long-term success.",note:"强调主动布局和战略眼光",type:"phrase"}
+    ]
+  },
+  {
+    id:5, title:"物流电商词汇", emoji:"🚚",
+    desc:"物流、电商平台、商家运营的核心词汇",
+    items:[
+      {id:"e01",en:"Logistics",zh:"物流；货运",ex:"We are improving our logistics tracking system.",type:"word"},
+      {id:"e02",en:"Onboarding",zh:"入驻；引导；入职培训",ex:"The merchant onboarding process usually takes about two days.",type:"word"},
+      {id:"e03",en:"Transactions",zh:"交易；成交量",ex:"Our goal is to boost the number of transactions.",type:"word"},
+      {id:"e04",en:"Shipping",zh:"运输交付；寄送",ex:"We are facing some delays in international shipping.",type:"word"},
+      {id:"e05",en:"Bulk view",zh:"批量查看",ex:"The new dashboard allows a bulk view of all orders, saving us hours of manual work.",type:"phrase"},
+      {id:"e06",en:"Inventory",zh:"库存",ex:"We must ensure inventory levels are updated in real-time to avoid overselling.",type:"word"}
+    ]
+  },
+  {
+    id:6, title:"听力练习·商务场景", emoji:"🎙️",
+    desc:"真实商务汇报场景长句，练习听力与口语节奏",
+    items:[
+      {id:"c01",en:"The goal of today's meeting is to get on the same page about where we stand and where we are heading in logistics tracking.",zh:"今天会议的目标，是就我们目前的状况以及物流追踪的未来方向，达成共识。",type:"sentence"},
+      {id:"c02",en:"Over the past 3 years, we've structured the project into four major phases.",zh:"在过去三年里，我们将项目分成了四个主要阶段。",type:"sentence"},
+      {id:"c03",en:"Phase 1 focused on platform infrastructure and core feature development.",zh:"第一阶段专注于平台基础架构和核心功能开发。",type:"sentence"},
+      {id:"c04",en:"Since the start of this year, user engagement has increased by 68%.",zh:"自今年年初以来，用户参与度提升了68%。",type:"sentence"},
+      {id:"c05",en:"In the short term, clear stats will significantly reduce merchant complaints.",zh:"短期来看，清晰的数据将大幅减少商家投诉。",type:"sentence"},
+      {id:"c06",en:"In the long term, these enhancements will form the foundation for our global logistics strategy.",zh:"从长远来看，这些提升将为我们的全球物流战略奠定基础。",type:"sentence"},
+      {id:"c07",en:"Even though we're starting with limited scope, we're positioning ourselves for greater and long-term success.",zh:"尽管我们从有限范围起步，但正在为更大、更长远的成功做好战略定位。",type:"sentence"},
+      {id:"c08",en:"Over the past couple of months, we've seen a 5% increase in logistics delays.",zh:"在过去几个月里，我们看到物流延误上升了5%。",type:"sentence"}
+    ]
+  }
+]};
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let S = {
+  lesson: null, mode: null,
+  items: [], idx: 0,
+  results: [],
+  drvTimer: null, countdownTimer: null,
+  settings: { speed: 0.9, delay: 7 },
+  prog: {}
+};
+
+// ═══════════════════════════════════════════
+// PROGRESS
+// ═══════════════════════════════════════════
+function loadProg() {
+  try {
+    const d = localStorage.getItem('eng_coach_v3');
+    S.prog = d ? JSON.parse(d) : { lessons:{}, streak:{last:'',cnt:0}, xp:0 };
+  } catch(e) {
+    S.prog = { lessons:{}, streak:{last:'',cnt:0}, xp:0 };
+  }
+}
+
+function saveProg() {
+  localStorage.setItem('eng_coach_v3', JSON.stringify(S.prog));
+}
+
+function doStreak() {
+  const today = new Date().toLocaleDateString('zh-CN');
+  const s = S.prog.streak || { last:'', cnt:0 };
+  if (s.last === today) return;
+  const yesterday = new Date(Date.now()-86400000).toLocaleDateString('zh-CN');
+  s.cnt = (s.last === yesterday) ? s.cnt + 1 : 1;
+  s.last = today;
+  S.prog.streak = s;
+  saveProg();
+}
+
+function addXP(n) {
+  S.prog.xp = (S.prog.xp || 0) + n;
+  saveProg();
+}
+
+// ═══════════════════════════════════════════
+// SPEECH
+// ═══════════════════════════════════════════
+function speak(text, rate, lang) {
+  return new Promise(res => {
+    if (!window.speechSynthesis) { res(); return; }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang || 'en-US';
+    u.rate = rate || S.settings.speed;
+    u.pitch = 1.0;
+    u.onend = u.onerror = () => res();
+    window.speechSynthesis.speak(u);
+  });
+}
+
+function speakZH(text) { return speak(text, 0.88, 'zh-CN'); }
+function stopSpeak() { if(window.speechSynthesis) window.speechSynthesis.cancel(); }
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+const SCREENS = ['home','lesson','driving','card','listen','shadow','result'];
+
+function navigate(name) {
+  stopSpeak(); clearDrvTimers();
+  SCREENS.forEach(s => {
+    const el = document.getElementById('screen-'+s);
+    if(el) el.classList.remove('active');
+  });
+  const t = document.getElementById('screen-'+name);
+  if(t) t.classList.add('active');
+  if(name==='home') renderHome();
+}
+
+// ═══════════════════════════════════════════
+// HOME
+// ═══════════════════════════════════════════
+function renderHome() {
+  loadProg();
+  const p = S.prog;
+  document.getElementById('streak-cnt').textContent = (p.streak||{}).cnt || 0;
+  document.getElementById('xp-cnt').textContent = p.xp || 0;
+
+  const grid = document.getElementById('lessons-grid');
+  grid.innerHTML = '';
+
+  VOCAB.lessons.forEach((lesson, i) => {
+    const lp = (p.lessons||{})[lesson.id] || {};
+    const prevDone = i === 0 || ((p.lessons||{})[VOCAB.lessons[i-1].id]||{}).stars > 0;
+    const locked = !prevDone;
+    const stars = lp.stars || 0;
+
+    const card = document.createElement('div');
+    card.className = 'lesson-card' + (locked ? ' locked' : '');
+    card.innerHTML =
+      `<div class="lesson-emoji">${lesson.emoji}</div>
+      <div class="lesson-info">
+        <div class="lesson-title">${lesson.title}</div>
+        <div class="lesson-meta">${lesson.items.length} 个词汇${lp.best ? ' · 最佳 '+lp.best+'%' : ''}</div>
+      </div>
+      ${locked
+        ? '<div style="font-size:24px;color:var(--text2)">🔒</div>'
+        : `<div class="lesson-stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>`}`;
+    if(!locked) card.onclick = () => openLesson(lesson.id);
+    grid.appendChild(card);
+  });
+}
+
+// ═══════════════════════════════════════════
+// LESSON DETAIL
+// ═══════════════════════════════════════════
+function openLesson(id) {
+  const l = VOCAB.lessons.find(x => x.id===id);
+  if(!l) return;
+  S.lesson = l;
+  document.getElementById('ld-emoji').textContent = l.emoji;
+  document.getElementById('ld-title').textContent = l.title;
+  document.getElementById('ld-desc').textContent = l.desc;
+  const lp = (S.prog.lessons||{})[id]||{};
+  const s = lp.stars||0;
+  document.getElementById('ld-stars').textContent = '⭐'.repeat(s)+'☆'.repeat(3-s);
+  navigate('lesson');
+}
+
+function startMode(mode) {
+  if(!S.lesson) return;
+  S.mode = mode; S.idx = 0; S.results = [];
+  S.items = shuffle([...S.lesson.items]);
+  navigate(mode);
+  if(mode==='driving') initDrv();
+  else if(mode==='card') initCard();
+  else if(mode==='listen') initLst();
+  else if(mode==='shadow') initShd();
+}
+
+function exitExercise() {
+  stopSpeak(); clearDrvTimers();
+  navigate(S.lesson ? 'lesson' : 'home');
+}
+
+// ═══════════════════════════════════════════
+// DRIVING MODE
+// ═══════════════════════════════════════════
+function initDrv() { S.idx=0; showDrvItem(); }
+
+function showDrvItem() {
+  const item = S.items[S.idx];
+  if(!item) { endDrv(); return; }
+  const n = S.items.length;
+  document.getElementById('drv-prog').textContent = `${S.idx+1} / ${n}`;
+  document.getElementById('drv-num').textContent = `第 ${S.idx+1} 个`;
+  document.getElementById('drv-en').textContent = item.en;
+  document.getElementById('drv-chip').textContent = chipLabel(item.type);
+  document.getElementById('drv-zh').textContent = item.zh;
+  document.getElementById('drv-ex').textContent = item.ex ? `"${item.ex}"` : '';
+  document.getElementById('drv-countdown').textContent = '';
+  document.getElementById('wave').style.opacity='1';
+  playDrvItem(item);
+}
+
+function playDrvItem(item) {
+  clearDrvTimers();
+  speak(item.en)
+    .then(() => delay(400))
+    .then(() => speakZH(item.zh))
+    .then(() => delay(300))
+    .then(() => item.ex ? speak('Example: '+item.ex, S.settings.speed*0.88) : null)
+    .then(() => {
+      document.getElementById('wave').style.opacity='0.3';
+      let remaining = S.settings.delay;
+      document.getElementById('drv-countdown').textContent = `${remaining}秒后自动下一个`;
+      const tick = () => {
+        remaining--;
+        if(remaining > 0) {
+          document.getElementById('drv-countdown').textContent = `${remaining}秒后自动下一个`;
+          S.countdownTimer = setTimeout(tick, 1000);
+        } else {
+          drvNext();
+        }
+      };
+      S.countdownTimer = setTimeout(tick, 1000);
+    });
+}
+
+function drvNext() {
+  clearDrvTimers(); stopSpeak();
+  if(S.idx < S.items.length-1) { S.idx++; showDrvItem(); }
+  else endDrv();
+}
+
+function drvPrev() {
+  clearDrvTimers(); stopSpeak();
+  if(S.idx > 0) { S.idx--; showDrvItem(); }
+}
+
+function endDrv() {
+  clearDrvTimers();
+  doStreak();
+  showToast('🎧 驾驶学习完成！', 'success');
+  setTimeout(() => navigate('lesson'), 1800);
+}
+
+function clearDrvTimers() {
+  clearTimeout(S.drvTimer); clearTimeout(S.countdownTimer);
+  S.drvTimer = null; S.countdownTimer = null;
+}
+
+// ═══════════════════════════════════════════
+// CARD MODE
+// ═══════════════════════════════════════════
+let cardFlipped = false;
+
+function initCard() { cardFlipped=false; S.idx=0; showCard(); }
+
+function showCard() {
+  const item = S.items[S.idx];
+  if(!item) { endEx(); return; }
+  setBar('card-bar', S.idx, S.items.length);
+  document.getElementById('card-cnt').textContent = `${S.idx+1}/${S.items.length}`;
+  document.getElementById('card-chip').textContent = chipLabel(item.type);
+  document.getElementById('card-en').textContent = item.en;
+  document.getElementById('card-en-b').textContent = item.en;
+  document.getElementById('card-zh').textContent = item.zh;
+  document.getElementById('card-note').textContent = item.note||'';
+  document.getElementById('card-ex').textContent = item.ex ? `"${item.ex}"` : '';
+
+  cardFlipped = false;
+  document.getElementById('card-flip').classList.remove('flipped');
+  document.getElementById('card-acts').style.display = 'none';
+  document.getElementById('card-hint2').style.display = 'block';
+  const tts = document.getElementById('card-tts');
+  tts.textContent = '🔊 正在播放...'; tts.style.opacity='1';
+
+  speak(item.en).then(() => {
+    tts.textContent = '🔊 点击重播'; tts.style.opacity='0.5';
+  });
+}
+
+function flipCard() {
+  if(!cardFlipped) {
+    cardFlipped = true;
+    document.getElementById('card-flip').classList.add('flipped');
+    document.getElementById('card-acts').style.display = 'flex';
+    document.getElementById('card-hint2').style.display = 'none';
+    stopSpeak();
+    setTimeout(() => speakZH(S.items[S.idx].zh), 350);
+  } else {
+    stopSpeak();
+    speak(S.items[S.idx].en);
+  }
+}
+
+function cardAns(knew) {
+  S.results.push({correct:knew});
+  if(knew) { addXP(10); showToast('👍 +10 XP','success'); }
+  S.idx++;
+  setTimeout(() => S.idx >= S.items.length ? endEx() : showCard(), 280);
+}
+
+// ═══════════════════════════════════════════
+// LISTEN MODE
+// ═══════════════════════════════════════════
+let lstCorrect=0, lstAnswered=false;
+
+function initLst() { S.idx=0; showLst(); }
+
+function showLst() {
+  const item = S.items[S.idx];
+  if(!item) { endEx(); return; }
+  setBar('lst-bar', S.idx, S.items.length);
+  document.getElementById('lst-cnt').textContent = `${S.idx+1}/${S.items.length}`;
+
+  // Build options: 1 correct + 2 random distractors
+  const pool = VOCAB.lessons.flatMap(l=>l.items).filter(x=>x.id!==item.id && x.zh!==item.zh);
+  const opts = [item, ...shuffle(pool).slice(0,2)].sort(()=>Math.random()-.5);
+  lstCorrect = opts.findIndex(o=>o.id===item.id);
+  lstAnswered = false;
+
+  opts.forEach((o,i) => {
+    document.getElementById('ct'+i).textContent = o.zh;
+    const b = document.getElementById('ch'+i);
+    b.className = 'choice-btn';
+    b.style.pointerEvents = 'auto';
+  });
+
+  const icon = document.getElementById('lst-icon');
+  icon.classList.remove('playing');
+  document.getElementById('lst-en').classList.remove('show');
+  document.getElementById('choices').classList.remove('show');
+  document.getElementById('lst-status').textContent = '正在播放...';
+
+  icon.classList.add('playing');
+  speak(item.en).then(() => {
+    icon.classList.remove('playing');
+    document.getElementById('lst-en').textContent = item.en;
+    document.getElementById('lst-en').classList.add('show');
+    document.getElementById('choices').classList.add('show');
+    document.getElementById('lst-status').textContent = '请选择正确的中文意思';
+  });
+}
+
+function lstAns(i) {
+  if(lstAnswered) return; lstAnswered=true;
+  const ok = i===lstCorrect;
+  S.results.push({correct:ok});
+  document.getElementById('ch'+i).classList.add(ok?'correct':'wrong');
+  if(!ok) document.getElementById('ch'+lstCorrect).classList.add('correct');
+  [0,1,2].forEach(j => document.getElementById('ch'+j).style.pointerEvents='none');
+  if(ok) { addXP(10); showToast('✓ 正确！+10 XP','success'); }
+  else showToast('✗ 错误','error');
+  setTimeout(() => { S.idx++; S.idx>=S.items.length ? endEx() : showLst(); }, 1600);
+}
+
+// ═══════════════════════════════════════════
+// SHADOW MODE
+// ═══════════════════════════════════════════
+function initShd() { S.idx=0; showShd(); }
+
+function showShd() {
+  const item = S.items[S.idx];
+  if(!item) { endEx(); return; }
+  setBar('shd-bar', S.idx, S.items.length);
+  document.getElementById('shd-cnt').textContent = `${S.idx+1}/${S.items.length}`;
+  document.getElementById('shd-chip').textContent = chipLabel(item.type);
+  document.getElementById('shd-en').textContent = item.en;
+  document.getElementById('shd-zh').textContent = item.zh;
+  shdPlay(null);
+}
+
+function shdPlay(rate) {
+  stopSpeak();
+  speak(S.items[S.idx].en, rate || S.settings.speed);
+}
+
+function shdEval(r) {
+  if(r==='replay') { shdPlay(0.72); return; }
+  const xp = r==='great'?10:5;
+  addXP(xp);
+  showToast(r==='great'?'🎯 很棒！+10 XP':'😊 加油！+5 XP','success');
+  S.results.push({correct:r==='great'});
+  S.idx++;
+  setTimeout(() => S.idx>=S.items.length ? endEx() : showShd(), 380);
+}
+
+// ═══════════════════════════════════════════
+// END EXERCISE / RESULT
+// ═══════════════════════════════════════════
+function endEx() {
+  stopSpeak(); doStreak();
+  const ok = S.results.filter(r=>r.correct).length;
+  const total = S.results.length;
+  const acc = total>0 ? Math.round(ok/total*100) : 0;
+  const stars = acc>=90?3:acc>=70?2:1;
+  const xpBonus = stars===3?50:stars===2?30:10;
+
+  const id = S.lesson.id;
+  if(!S.prog.lessons) S.prog.lessons={};
+  const ex = S.prog.lessons[id]||{};
+  if(!ex.stars || stars>ex.stars) {
+    S.prog.lessons[id] = { stars, best:acc };
+  }
+  addXP(xpBonus);
+  saveProg();
+
+  const emotes=['😊','🌟','🎉'];
+  const titles=['课程完成！','表现不错！','完美通关！'];
+  document.getElementById('res-emoji').textContent = emotes[stars-1];
+  document.getElementById('res-title').textContent = titles[stars-1];
+  document.getElementById('res-stars').textContent = '⭐'.repeat(stars)+'☆'.repeat(3-stars);
+  document.getElementById('res-xp').textContent = `+${xpBonus} XP 获得！`;
+  document.getElementById('res-ok').textContent = ok;
+  document.getElementById('res-ng').textContent = total-ok;
+  document.getElementById('res-acc').textContent = acc+'%';
+  navigate('result');
+}
+
+function retryLesson() {
+  if(S.lesson) startMode(S.mode);
+  else navigate('home');
+}
+
+// ═══════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════
+function showSettings() { document.getElementById('overlay').classList.add('show'); }
+
+function hideSettings(e) {
+  if(e.target===document.getElementById('overlay'))
+    document.getElementById('overlay').classList.remove('show');
+}
+
+function setSpeed(v) {
+  S.settings.speed = v;
+  document.querySelectorAll('[data-sp]').forEach(b =>
+    b.classList.toggle('active', parseFloat(b.dataset.sp)===v));
+}
+
+function setDelay(v) {
+  S.settings.delay = v;
+  document.querySelectorAll('[data-dl]').forEach(b =>
+    b.classList.toggle('active', parseInt(b.dataset.dl)===v));
+}
+
+function resetProg() {
+  if(confirm('确定要重置所有进度？此操作不可恢复。')) {
+    localStorage.removeItem('eng_coach_v3');
+    S.prog = { lessons:{}, streak:{last:'',cnt:0}, xp:0 };
+    document.getElementById('overlay').classList.remove('show');
+    renderHome();
+    showToast('进度已重置','error');
+  }
+}
+
+// ═══════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════
+function shuffle(a) {
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+function delay(ms) { return new Promise(r=>setTimeout(r,ms)); }
+
+function setBar(id, idx, total) {
+  document.getElementById(id).style.width = (idx/total*100)+'%';
+}
+
+function chipLabel(type) {
+  return type==='word'?'词汇':type==='phrase'?'短语':'句子';
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show'+(type?' '+type:'');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  loadProg(); renderHome();
+
+  // iOS: prime speech synthesis with first touch
+  document.addEventListener('touchstart', function primeAudio() {
+    const u = new SpeechSynthesisUtterance('');
+    u.volume = 0;
+    window.speechSynthesis.speak(u);
+    document.removeEventListener('touchstart', primeAudio);
+  }, {once:true, passive:true});
+});
+
+// Pause when screen locks
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden) { stopSpeak(); clearDrvTimers(); }
+});
+</script>
 </body>
 </html>
